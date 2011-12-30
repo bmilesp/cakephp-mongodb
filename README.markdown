@@ -1,8 +1,8 @@
-# mongoDB datasource for CakePHP
+# mongoDB datasource, bake templates and helpers for CakePHP
 
 ## Requirements
 PHP5, 
-pecl mongo (http://php.net/mongo)
+pecl mongo (http://php.net/mongo) (note: if using WAMP, make sure your console php.ini also has the mongo extension or you will get a 'Mongo' class not found error)
 
 ## Installation
 
@@ -59,10 +59,19 @@ Mongo uses a primary key named "\_id" (cannot be renamed). It can be any format 
 Before you start, you may find it useful to see [a model sample.](http://github.com/ichikaway/mongoDB-Datasource/blob/master/samples/models/post.php)
 There are also some sample [controller actions: find,save,delete,deleteAll,updateAll](http://github.com/ichikaway/mongoDB-Datasource/blob/master/samples/controllers/posts_controller.php) note that your controller code needs no specific code to use this datasource.
 
+
+To use the Helpers, make sure they are added to App.Controller (eg: $uses = array('Mongodb.MongoHtmlHelper'));
+
+The helpers contain methods that automate the mongoDate object trickery. 
+
+To use the bake templates, you must have the cakeDC template plugin. when baking you will notice a 'mongo' option added to template types.
+
 ## Author
 Yasushi Ichikawa ([ichikaway](http://twitter.com/ichikaway))
 
 Andy Dawson ([AD7six](http://twitter.com/AD7six))
+
+Brandon Plasters ([bmilesp] (http://twitter.com/bmilesp))
 
 
 ## Contributors
