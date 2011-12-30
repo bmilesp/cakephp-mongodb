@@ -36,9 +36,13 @@ foreach ($fields as $field) {
 	if ($isKey !== true) {
 		if(count($this->templateVars['schema'][$field])>1){
 				//add subDocData methds here
-		}else{	
+		}else{
 			echo "\t\t<dt><?php echo __('" . Inflector::humanize($field) . "'); ?></dt>\n";
-			echo "\t\t<dd>\n\t\t\t<?php echo h(\${$singularVar}['{$modelClass}']['{$field}']); ?>\n\t\t\t&nbsp;\n\t\t</dd>\n";
+			if($this->templateVars['schema'][$field]['type'] == 'datetime'){
+				echo "\t\t<dd>\n\t\t\t<?php echo h(\$this->MongoHtml->mongodate(\${$singularVar}['{$modelClass}']['{$field}'])); ?>&nbsp;</dd>\n";
+			}else{	
+				echo "\t\t<dd>\n\t\t\t<?php echo h(\${$singularVar}['{$modelClass}']['{$field}']); ?>\n\t\t\t&nbsp;\n\t\t</dd>\n";
+			}
 		}
 	}
 }

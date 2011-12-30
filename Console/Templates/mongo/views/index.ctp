@@ -51,7 +51,11 @@ $plugin = (!empty($this->templateVars['plugin']))? "'plugin' => '".strtolower($t
 				if(count($this->templateVars['schema'][$field]) > 1){
 				//add subDocData methds here
 				}else{
-					echo "\t\t<td><?php echo h(\${$singularVar}['{$modelClass}']['{$field}']); ?>&nbsp;</td>\n";
+					if($this->templateVars['schema'][$field]['type'] == 'datetime'){
+						echo "\t\t<td><?php echo h(\$this->MongoHtml->mongodate(\${$singularVar}['{$modelClass}']['{$field}'])); ?>&nbsp;</td>\n";
+					}else{
+						echo "\t\t<td><?php echo h(\${$singularVar}['{$modelClass}']['{$field}']); ?>&nbsp;</td>\n";
+					}
 				}
 			}
 		}
