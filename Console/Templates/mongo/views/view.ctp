@@ -15,6 +15,7 @@
  * @since         CakePHP(tm) v 1.2.0.5234
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
+include(dirname(dirname(__FILE__)) . DS .  'common_params.php');
 ?>
 <div class="<?php echo $pluralVar;?> view">
 <h2><?php echo "<?php  echo __('{$singularHumanName}');?>";?></h2>
@@ -49,14 +50,20 @@ foreach ($fields as $field) {
 ?>
 	</dl>
 </div>
+<?php 
+		$idKeyPK = $idKey = "\${$singularVar}['{$modelClass}']['{$primaryKey}']";
+		if ($slugged) {
+			$idKey = "\${$singularVar}['{$modelClass}']['slug']";
+		}
+?>
 <div class="actions">
 	<h3><?php echo "<?php echo __('Actions'); ?>"; ?></h3>
 	<ul>
 <?php
 	$plugin = (!empty($this->templateVars['plugin']))? "'plugin' => '".strtolower($this->templateVars['plugin'])."', " : null;
 			
-	echo "\t\t<li><?php echo \$this->Html->link(__('Edit " . $singularHumanName ."'), array({$plugin}'action' => 'edit', \${$singularVar}['{$modelClass}']['{$primaryKey}'])); ?> </li>\n";
-	echo "\t\t<li><?php echo \$this->Form->postLink(__('Delete " . $singularHumanName . "'), array({$plugin}'action' => 'delete', \${$singularVar}['{$modelClass}']['{$primaryKey}']), null, __('Are you sure you want to delete # %s?', \${$singularVar}['{$modelClass}']['{$primaryKey}'])); ?> </li>\n";
+	echo "\t\t<li><?php echo \$this->Html->link(__('Edit " . $singularHumanName ."'), array({$plugin}'action' => 'edit', {$idKeyPK})); ?> </li>\n";
+	echo "\t\t<li><?php echo \$this->Form->postLink(__('Delete " . $singularHumanName . "'), array({$plugin}'action' => 'delete', {$idKeyPK}), null, __('Are you sure you want to delete # %s?', {$idKeyPK})); ?> </li>\n";
 	echo "\t\t<li><?php echo \$this->Html->link(__('List " . $pluralHumanName . "'), array({$plugin}'action' => 'index')); ?> </li>\n";
 	echo "\t\t<li><?php echo \$this->Html->link(__('New " . $singularHumanName . "'), array({$plugin}'action' => 'add')); ?> </li>\n";
 

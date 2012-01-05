@@ -746,12 +746,21 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function setMongoUpdateOperator(&$Model, $data) {
+		
 		if(isset($data['updated'])) {
 			$updateField = 'updated';
 		} else {
 			$updateField = 'modified';			
 		}
 
+		/* needed for actually updating the modified date? */
+		if(isset($Model->_schema[$updateField])){
+			if(!empty($Model->_schema[$updateField]['type']) &&
+				$Model->_schema[$updateField]['type'] == 'datetime'){
+					$data[$updateField] = new MongoDate();
+				}
+		};
+		
 		//setting Mongo operator
 		if(empty($Model->mongoNoSetOperator)) {
 			if(!preg_grep('/^\$/', array_keys($data))) {

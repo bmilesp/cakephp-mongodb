@@ -15,17 +15,28 @@
  * @since         CakePHP(tm) v 1.2.0.5234
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
+include(dirname(dirname(__FILE__)) . DS .  'common_params.php');
 $plugin = (!empty($this->templateVars['plugin']))? "'plugin' => '".strtolower($this->templateVars['plugin'])."', " : null;
 ?>
 <div class="<?php echo $pluralVar;?> index">
 	<h2><?php echo "<?php echo __('{$pluralHumanName}');?>";?></h2>
+
+<?php echo "<?php\n";?>
+	echo $this->Form->create('<?php echo $modelClass;?>', array(
+		'url' => array_merge(array(<?php echo $plugin ?>'action' => 'index'), $this->params['pass'])
+		));
+	//echo $this->Form->input('title', array('div' => false));
+	echo $this->Form->submit(__('Search', true), array('div' => false));
+	echo $this->Form->end();
+<?php echo '?>';?>
+
 	<table cellpadding="0" cellspacing="0">
 	<tr>
 	<?php  foreach ($fields as $field):
 		if(count($this->templateVars['schema'][$field]) > 1){
 				//add subDocData methds here
 		}else{?>
-			<th><?php echo "<?php echo \$this->Paginator->sort('{$field}');?>";?></th>
+			<th><?php echo "<?php echo \$this->Paginator->sort('{$field}', null, array('url'=>array({$plugin})));?>";?></th>
 	<?php 
 		}
 	endforeach;?>
@@ -59,12 +70,17 @@ $plugin = (!empty($this->templateVars['plugin']))? "'plugin' => '".strtolower($t
 				}
 			}
 		}
+		
+		$idKeyPK = $idKey = "\${$singularVar}['{$modelClass}']['{$primaryKey}']";
+		if ($slugged) {
+			$idKey = "\${$singularVar}['{$modelClass}']['slug']";
+		}
 
 
 		echo "\t\t<td class=\"actions\">\n";
-		echo "\t\t\t<?php echo \$this->Html->link(__('View'), array({$plugin} 'action' => 'view', \${$singularVar}['{$modelClass}']['{$primaryKey}'])); ?>\n";
-	 	echo "\t\t\t<?php echo \$this->Html->link(__('Edit'), array({$plugin} 'action' => 'edit', \${$singularVar}['{$modelClass}']['{$primaryKey}'])); ?>\n";
-	 	echo "\t\t\t<?php echo \$this->Form->postLink(__('Delete'), array({$plugin}'action' => 'delete', \${$singularVar}['{$modelClass}']['{$primaryKey}']), null, __('Are you sure you want to delete # %s?', \${$singularVar}['{$modelClass}']['{$primaryKey}'])); ?>\n";
+		echo "\t\t\t<?php echo \$this->Html->link(__('View'), array({$plugin} 'action' => 'view', {$idKey})); ?>\n";
+	 	echo "\t\t\t<?php echo \$this->Html->link(__('Edit'), array({$plugin} 'action' => 'edit', {$idKeyPK})); ?>\n";
+	 	echo "\t\t\t<?php echo \$this->Form->postLink(__('Delete'), array({$plugin}'action' => 'delete', {$idKeyPK}), null, __('Are you sure you want to delete %s?', {$idKeyPK})); ?>\n";
 		echo "\t\t</td>\n";
 	echo "\t</tr>\n";
 
@@ -82,9 +98,9 @@ $plugin = (!empty($this->templateVars['plugin']))? "'plugin' => '".strtolower($t
 	<div class="paging">
 	<?php
 		echo "<?php\n";
-		echo "\t\techo \$this->Paginator->prev('< ' . __('previous'), array(), null, array({$plugin}'class' => 'prev disabled'));\n";
+		echo "\t\techo \$this->Paginator->prev('< ' . __('previous'), array('url' => array({$plugin})), null, array({$plugin}'class' => 'prev disabled'));\n";
 		echo "\t\techo \$this->Paginator->numbers(array('separator' => ''));\n";
-		echo "\t\techo \$this->Paginator->next(__('next') . ' >', array(), null, array({$plugin}'class' => 'next disabled'));\n";
+		echo "\t\techo \$this->Paginator->next(__('next') . ' >', array({$plugin}), null, array({$plugin}'class' => 'next disabled'));\n";
 		echo "\t?>\n";
 	?>
 	</div>

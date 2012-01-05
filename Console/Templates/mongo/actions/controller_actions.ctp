@@ -1,68 +1,151 @@
 <?php
 /**
- * Bake Template for Controller action generation.
- *
- * PHP 5
- *
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2010, Cake Development Corporation (http://cakedc.com)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
- * @package       Cake.Console.Templates.default.actions
- * @since         CakePHP(tm) v 1.3
- * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
+ * @copyright Copyright 2005-2010, Cake Development Corporation (http://cakedc.com)
+ * @license MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
+
+/**
+ * Bake Template for Controller action generation.
+ *
+ */
+include(dirname(dirname(__FILE__)) . DS .  'common_params.php');
+
+if ($parentIncluded) {
+	$controllerRoutePostfix = ', $' . $parentIdVar;
+	$controllerParentSetVars = "\n\t\t\$this->set(compact('". $parentIdVar . "'));";
+	$controllerParentHeader = "\n" . ' * @param string $' . $parentIdVar . ', ' . $singularHumanParentName . " id";
+	$controllerParentSingleParam =  '$' . $parentIdVar;
+	if ($parentSlugged) {
+		//$controllerParentSingleParamDbField = "'{$parentSlugVar}'";
+		
+		$controllerRoutePostfix = ', $' . $parentSlugVar;
+		$controllerParentSetVars = "\n\t\t\$this->set(compact('". $parentSlugVar . "'));";
+		$controllerParentHeader = "\n" . ' * @param string $' . $parentSlugVar . ', ' . $singularHumanParentName . " id";
+		$controllerParentSingleParam =  '$' . $parentSlugVar;
+		$controllerParentSingleParamName = "'\${$parentSlugVar}'";
+		
+	}
+	
+} else {
+	$controllerParentHeader = $controllerRoutePostfix = $controllerParentSetVars = '';
+	$controllerParentSingleParam = '';
+}
+
+$controllerHeaderId = $controllerHeader = ' * @param string $id, ' . strtolower($singularHumanName) . " id";
+$controllerSingleParamId = $controllerSingleParam = '$id = null';
+$controllerSingleParamNameId = $controllerSingleParamName = '$id';
+$controllerSingleParamDbField = "'id'";
+
+if ($slugged) {
+	$controllerHeader = ' * @param string $slug, ' . strtolower($singularHumanName) . " slug";
+	$controllerSingleParam = '$slug = null';
+	$controllerSingleParamName = '$slug';
+	$controllerSingleParamDbField = "'slug'";
+}
+
+App::uses('SubTemplateShell', 'Templates.Console/Command');
+$Subtemplate = new SubTemplateShell($this); 
+echo $Subtemplate->generate('controller', 'code', $this->templateVars);
 ?>
 
 /**
- * <?php echo $admin ?>index method
- *
- * @return void
+ * <?php echo ($admin ? 'Admin index' : 'Index')?> for <?php echo strtolower($singularHumanName);?>.
+ *<?php echo $controllerParentHeader;?> 
+ * @access public
  */
-	public function <?php echo $admin ?>index() {
+	public function <?php echo $admin ?>index(<?php echo $controllerParentSingleParam;?>) {
 		$this-><?php echo $currentModelName ?>->recursive = 0;
-		$this->set('<?php echo $pluralName ?>', $this->paginate());
+<?php if ($parentIncluded): ?>
+<?php if ($parentSlugged): ?>
+		$<?php echo $singularParentName;?> = $this-><?php echo $currentModelName ?>-><?php echo $parentClass;?>->find('first', array('conditions' => array('<?php echo $parentClass;?>.slug' => <?php echo $controllerParentSingleParam;?>), 'recursive' => -1));
+		if (empty($<?php echo $singularParentName;?>)) {
+			$this->Session->setFlash(__('Wrong id',true));
+			$this->redirect('/');
+		}
+		$this->Paginator->paginate['conditions'] = array('<?php echo $parentIdDbVar;?>' => $<?php echo $singularParentName;?>['<?php echo $parentClass;?>']['id']);
+<?php else:?>
+		$this->Paginator->paginate['conditions'] = array('<?php echo $parentIdDbVar;?>' => $<?php echo $parentIdVar;?>);
+<?php endif;?>
+<?php endif;?>
+		$this->set('<?php echo $pluralName ?>', $this->Paginator->paginate());<?php echo $controllerParentSetVars;?> 
 	}
 
 /**
- * <?php echo $admin ?>view method
+ * <?php echo ($admin ? 'Admin view' : 'View')?> for <?php echo strtolower($singularHumanName);?>.
  *
- * @param string $id
- * @return void
+<?php echo $controllerHeader; ?> 
+ * @access public
  */
-	public function <?php echo $admin ?>view($id = null) {
-		$this-><?php echo $currentModelName; ?>->id = $id;
-		if (!$this-><?php echo $currentModelName; ?>->exists()) {
-			throw new NotFoundException(__('Invalid <?php echo strtolower($singularHumanName); ?>'));
+	public function <?php echo $admin ?>view(<?php echo $controllerSingleParam;?>) {
+		try {
+			$<?php echo $singularName; ?> = $this-><?php echo $currentModelName; ?>->view(<?php echo $controllerSingleParamName; ?>);
+<?php if ($parentIncluded):?>
+			$<?php echo $parentIdVar;?> = $<?php echo $singularName; ?>['<?php echo $currentModelName; ?>']['<?php echo $parentIdDbVar;?>'];
+<?php if ($parentSlugged): ?>
+			$<?php echo $singularParentName;?> = $this-><?php echo $currentModelName ?>-><?php echo $parentClass;?>->find('first', array('conditions' => array('<?php echo $parentClass;?>.id' => $<?php echo $parentIdVar;?>), 'recursive' => -1));
+			$<?php echo $parentSlugVar;?> = $<?php echo $singularParentName;?>['<?php echo $parentClass;?>']['slug'];
+<?php endif;?>
+<?php endif; ?>
+		} catch (OutOfBoundsException $e) {
+<?php if ($wannaUseSession): ?>
+			$this->Session->setFlash($e->getMessage());
+<?php if ($parentIncluded):?>		
+			$this->redirect('/');
+<?php else: ?>
+			$this->redirect(array('action' => 'index'));
+<?php endif; ?>
+<?php else: ?>
+<?php if ($parentIncluded):?>		
+			$this->flash($e->getMessage(), '/');
+<?php else: ?>
+			$this->flash($e->getMessage(), array('action' => 'index'));
+<?php endif; ?>
+<?php endif; ?>
 		}
-		$this->set('<?php echo $singularName; ?>', $this-><?php echo $currentModelName; ?>->read(null, $id));
+		$this->set(compact('<?php echo $singularName; ?>'));<?php echo $controllerParentSetVars;?> 
 	}
 
 <?php $compact = array(); ?>
 /**
- * <?php echo $admin ?>add method
- *
- * @return void
+ * <?php echo ($admin ? 'Admin add' : 'Add')?> for <?php echo strtolower($singularHumanName);?>.
+ *<?php echo $controllerParentHeader;?> 
+ * @access public
  */
-	public function <?php echo $admin ?>add() {
-		if ($this->request->is('post')) {
-			$this-><?php echo $currentModelName; ?>->create();
-			if ($this-><?php echo $currentModelName; ?>->save($this->request->data)) {
-<?php if ($wannaUseSession): ?>
-				$this->Session->setFlash(__('The <?php echo strtolower($singularHumanName); ?> has been saved'));
-				$this->redirect(array('action' => 'index'));
-<?php else: ?>
-				$this->flash(__('<?php echo ucfirst(strtolower($currentModelName)); ?> saved.'), array('action' => 'index'));
+	public function <?php echo $admin ?>add(<?php echo $controllerParentSingleParam;?>) {
+		try {
+<?php if ($parentSlugged): ?>
+			$<?php echo $singularParentName;?> = $this-><?php echo $currentModelName ?>-><?php echo $parentClass;?>->find('first', array('conditions' => array('<?php echo $parentClass;?>.slug' => $<?php echo $parentSlugVar;?>), 'recursive' => -1));
+			if (empty($<?php echo $singularParentName;?>)) {
+				$this->Session->setFlash(__('Wrong id',true));
+				$this->redirect('/');
+			}
+			$<?php echo $parentIdVar;?> = $<?php echo $singularParentName;?>['<?php echo $parentClass;?>']['id'];
 <?php endif; ?>
-			} else {
+			$result = $this-><?php echo $currentModelName; ?>->add(<?php if ($parentIncluded) echo '$' . $parentIdVar . ', ' ?><?php if ($userIncluded) echo '$this->Auth->user(\'id\'), ';?>$this->request->data);
+			if ($result === true) {
 <?php if ($wannaUseSession): ?>
-				$this->Session->setFlash(__('The <?php echo strtolower($singularHumanName); ?> could not be saved. Please, try again.'));
+				$this->Session->setFlash(__('The <?php echo strtolower($singularHumanName); ?> has been saved', true));
+				$this->redirect(array('action' => 'index'<?php echo $controllerRoutePostfix; ?>));
+<?php else: ?>
+				$this->flash(__('<?php echo ucfirst(strtolower($currentModelName)); ?> saved.', true), array('action' => 'index'<?php echo $controllerRoutePostfix; ?>));
 <?php endif; ?>
 			}
+		} catch (OutOfBoundsException $e) {
+<?php if ($wannaUseSession): ?>
+			$this->Session->setFlash($e->getMessage());
+<?php endif; ?>
+		} catch (Exception $e) {
+<?php if ($wannaUseSession): ?>
+			$this->Session->setFlash($e->getMessage());
+			$this->redirect(array('action' => 'index'<?php echo $controllerRoutePostfix; ?>));
+<?php else: ?>
+			$this->flash($e->getMessage(), array('action' => 'index'<?php echo $controllerRoutePostfix; ?>));
+<?php endif; ?>
 		}
 <?php
 	foreach (array('belongsTo', 'hasAndBelongsToMany') as $assoc):
@@ -78,36 +161,46 @@
 	if (!empty($compact)):
 		echo "\t\t\$this->set(compact(".join(', ', $compact)."));\n";
 	endif;
-?>
+?><?php echo str_replace("\n", '', $controllerParentSetVars);?> 
 	}
 
 <?php $compact = array(); ?>
 /**
- * <?php echo $admin ?>edit method
+ * <?php echo ($admin ? 'Admin edit' : 'Edit')?> for <?php echo strtolower($singularHumanName);?>.
  *
- * @param string $id
- * @return void
+<?php echo $controllerHeaderId; ?> 
+ * @access public
  */
-	public function <?php echo $admin; ?>edit($id = null) {
-		$this-><?php echo $currentModelName; ?>->id = $id;
-		if (!$this-><?php echo $currentModelName; ?>->exists()) {
-			throw new NotFoundException(__('Invalid <?php echo strtolower($singularHumanName); ?>'));
-		}
-		if ($this->request->is('post') || $this->request->is('put')) {
-			if ($this-><?php echo $currentModelName; ?>->save($this->request->data)) {
-<?php if ($wannaUseSession): ?>
-				$this->Session->setFlash(__('The <?php echo strtolower($singularHumanName); ?> has been saved'));
-				$this->redirect(array('action' => 'index'));
-<?php else: ?>
-				$this->flash(__('The <?php echo strtolower($singularHumanName); ?> has been saved.'), array('action' => 'index'));
+	public function <?php echo $admin; ?>edit(<?php echo $controllerSingleParamId;?>) {
+		try {
+			$result = $this-><?php echo $currentModelName; ?>->edit(<?php echo $controllerSingleParamNameId; ?>, <?php if ($userIncluded) echo '$this->Auth->user(\'id\'), ';?>$this->request->data);
+			if ($result === true) {
+<?php if ($parentIncluded):?>		
+				$<?php echo $parentIdVar;?> = $this-><?php echo $currentModelName; ?>->data['<?php echo $currentModelName; ?>']['<?php echo $parentIdDbVar;?>'];
 <?php endif; ?>
-			} else {
 <?php if ($wannaUseSession): ?>
-				$this->Session->setFlash(__('The <?php echo strtolower($singularHumanName); ?> could not be saved. Please, try again.'));
+				$this->Session->setFlash(__('<?php echo $singularHumanName;?> saved', true));
+				$this->redirect(array('action' => 'view', $this-><?php echo $currentModelName; ?>->data['<?php echo $currentModelName; ?>'][<?php echo $controllerSingleParamDbField;?>]));
+<?php else: ?>
+			$this->flash(__('Invalid <?php echo strtolower($singularHumanName); ?>', true), array('action' => 'view', $this-><?php echo $currentModelName; ?>->data['<?php echo $currentModelName; ?>'][<?php echo $controllerSingleParamDbField;?>]));
+<?php endif; ?>				
+			} else {
+				$this->request->data = $result;
+<?php if ($parentIncluded):?>		
+				$<?php echo $parentIdVar;?> = $this->request->data['<?php echo $currentModelName; ?>']['<?php echo $parentIdDbVar;?>'];
 <?php endif; ?>
 			}
-		} else {
-			$this->request->data = $this-><?php echo $currentModelName; ?>->read(null, $id);
+<?php if ($parentSlugged): ?>
+			$<?php echo $singularParentName;?> = $this-><?php echo $currentModelName ?>-><?php echo $parentClass;?>->find('first', array('conditions' => array('<?php echo $parentClass;?>.id' => $<?php echo $parentIdVar;?>), 'recursive' => -1));
+			$<?php echo $parentSlugVar;?> = $<?php echo $singularParentName;?>['<?php echo $parentClass;?>']['slug'];
+<?php endif;?>
+		} catch (OutOfBoundsException $e) {
+<?php if ($wannaUseSession): ?>
+			$this->Session->setFlash($e->getMessage());
+			$this->redirect('/');
+<?php else: ?>
+			$this->flash($e->getMessage(), '/');
+<?php endif; ?>
 		}
 <?php
 		foreach (array('belongsTo', 'hasAndBelongsToMany') as $assoc):
@@ -123,35 +216,58 @@
 		if (!empty($compact)):
 			echo "\t\t\$this->set(compact(".join(', ', $compact)."));\n";
 		endif;
-	?>
+	?><?php echo str_replace("\n", '', $controllerParentSetVars);?> 
 	}
 
 /**
- * <?php echo $admin ?>delete method
+ * <?php echo ($admin ? 'Admin delete' : 'Delete')?> for <?php echo strtolower($singularHumanName);?>.
  *
- * @param string $id
- * @return void
+<?php echo $controllerHeaderId; ?> 
+ * @access public
  */
-	public function <?php echo $admin; ?>delete($id = null) {
-		if (!$this->request->is('post')) {
-			throw new MethodNotAllowedException();
-		}
-		$this-><?php echo $currentModelName; ?>->id = $id;
-		if (!$this-><?php echo $currentModelName; ?>->exists()) {
-			throw new NotFoundException(__('Invalid <?php echo strtolower($singularHumanName); ?>'));
-		}
-		if ($this-><?php echo $currentModelName; ?>->delete()) {
-<?php if ($wannaUseSession): ?>
-			$this->Session->setFlash(__('<?php echo ucfirst(strtolower($singularHumanName)); ?> deleted'));
-			$this->redirect(array('action'=>'index'));
+	public function <?php echo $admin; ?>delete(<?php echo $controllerSingleParamId;?>) {
+		try {
+<?php if ($parentIncluded):?>
+<?php if ($parentSlugged): ?>
+			$<?php echo $singularName; ?> = $this-><?php echo $currentModelName; ?>->read(null, $id);
 <?php else: ?>
-			$this->flash(__('<?php echo ucfirst(strtolower($singularHumanName)); ?> deleted'), array('action' => 'index'));
+			$<?php echo $singularName; ?> = $this-><?php echo $currentModelName; ?>->view($id);
+<?php endif; ?>
+			$<?php echo $parentIdVar;?> = $<?php echo $singularName; ?>['<?php echo $currentModelName; ?>']['<?php echo $parentIdDbVar;?>'];			
+<?php if ($parentSlugged): ?>
+			$<?php echo $singularParentName;?> = $this-><?php echo $currentModelName ?>-><?php echo $parentClass;?>->find('first', array('conditions' => array('<?php echo $parentClass;?>.id' => $<?php echo $parentIdVar;?>), 'recursive' => -1));
+			$<?php echo $parentSlugVar;?> = $<?php echo $singularParentName;?>['<?php echo $parentClass;?>']['slug'];
+			<?php echo "\$this->set(compact('". $parentSlugVar . "'));";?> 
+<?php else:?>
+			<?php echo "\$this->set(compact('". $parentIdVar . "'));";?> 
+<?php endif;?>
+<?php endif; ?>
+			$result = $this-><?php echo $currentModelName; ?>->validateAndDelete(<?php echo $controllerSingleParamNameId; ?>, <?php if ($userIncluded) echo '$this->Auth->user(\'id\'), ';?>$this->request->data);
+			if ($result === true) {
+<?php if ($wannaUseSession): ?>
+				$this->Session->setFlash(__('<?php echo ucfirst(strtolower($singularHumanName)); ?> deleted', true));
+				$this->redirect(array('action' => 'index'<?php echo $controllerRoutePostfix; ?>));
+<?php else: ?>
+				$this->flash(__('<?php echo ucfirst(strtolower($singularHumanName)); ?> deleted', true), array('action' => 'index'<?php echo $controllerRoutePostfix; ?>));
+<?php endif; ?>
+			}
+		} catch (Exception $e) {
+<?php if ($wannaUseSession): ?>
+			$this->Session->setFlash($e->getMessage());
+<?php if ($parentIncluded):?>
+			$this->redirect('/');
+<?php else: ?>
+			$this->redirect(array('action' => 'index'));
+<?php endif; ?>
+<?php else: ?>
+<?php if ($parentIncluded):?>
+			$this->flash($e->getMessage(), '/');
+<?php else: ?>
+			$this->flash($e->getMessage(), array('action' => 'index'));
+<?php endif; ?>
 <?php endif; ?>
 		}
-<?php if ($wannaUseSession): ?>
-		$this->Session->setFlash(__('<?php echo ucfirst(strtolower($singularHumanName)); ?> was not deleted'));
-<?php else: ?>
-		$this->flash(__('<?php echo ucfirst(strtolower($singularHumanName)); ?> was not deleted'), array('action' => 'index'));
-<?php endif; ?>
-		$this->redirect(array('action' => 'index'));
+		if (!empty($this-><?php echo $currentModelName; ?>->data['<?php echo $singularName; ?>'])) {
+			$this->set('<?php echo $singularName; ?>', $this-><?php echo $currentModelName; ?>->data['<?php echo $singularName; ?>']);
+		}
 	}
